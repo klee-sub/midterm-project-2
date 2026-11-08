@@ -1,0 +1,14 @@
+{% load static %}<!DOCTYPE html><html><head><title>Photo Blog</title><link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"><link rel="stylesheet" href="{% static 'css/blog.css' %}"></head><body><div class="page-header"><a href="/" class="top-menu">홈</a>{% if user.is_authenticated %}<a href="{% url 'post_new' %}" class="top-menu">새 글</a>{% else %}<a href="{% url 'login' %}" class="top-menu">로그인</a>{% endif %}<h1><a href="/">Photo Blog</a></h1></div><div class="content container"><div class="row"><div class="col-md-8">{% block content %}{% endblock %}</div></div></div><script>
+(() => {
+  let fingerprint = null;
+  const refreshIfChanged = () => fetch('/api_root/Post/', {credentials: 'same-origin'})
+    .then(response => response.json())
+    .then(posts => {
+      const next = JSON.stringify(posts.map(post => [post.id, post.created_date, post.comments.length]));
+      if (fingerprint !== null && fingerprint !== next) window.location.reload();
+      fingerprint = next;
+    }).catch(() => {});
+  refreshIfChanged();
+  window.setInterval(refreshIfChanged, 10000);
+})();
+</script></body></html>

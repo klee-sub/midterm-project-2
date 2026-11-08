@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+    <EditText
+        android:id="@+id/dialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="제목을 입력하세요"
+        android:inputType="textCapSentences"
+        android:maxLines="1" />
+    <EditText
+        android:id="@+id/dialogBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top|start"
+        android:hint="본문을 입력하세요"
+        android:inputType="textCapSentences|textMultiLine"
+        android:minLines="3" />
+    <EditText
+        android:id="@+id/dialogTags"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="태그 (쉼표로 구분)"
+        android:inputType="text" />
+</LinearLayout>
