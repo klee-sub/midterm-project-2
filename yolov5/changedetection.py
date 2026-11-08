@@ -1,4 +1,5 @@
 import os
+import base64
 import cv2
 import pathlib
 import requests
@@ -7,23 +8,14 @@ from datetime import datetime
 
 class ChangeDetection:
     result_prev = []
-    HOST = 'https://klee.pythonanywhere.com'
-    username = 'klee'
-    password = 'fakepassword'
-    token = ''
+    HOST = os.getenv('AUTH_SERVER_URL', 'http://127.0.0.1:9000')
+    token = os.environ['AUTH_SERVER_TOKEN']
     title = ''
     text = ''
+    objects = []
 
     def __init__(self, names):
         self.result_prev = [0 for i in range(len(names))]
-
-        res = requests.post(self.HOST + '/api-token-auth/', {
-            'username': self.username,
-            'password': self.password,
-        })
-        res.raise_for_status()
-        self.token = res.json()['token']
-        print(self.token)
 
     def add(self, names, detected_current, save_dir, image):
         self.title = ''
@@ -38,6 +30,7 @@ class ChangeDetection:
             i += 1
 
         self.result_prev = detected_current[:]
+        self.objects = [names[i] for i in range(len(detected_current)) if detected_current[i] == 1]
 
         if change_flag == 1:
             self.send(save_dir, image)
@@ -52,17 +45,18 @@ class ChangeDetection:
 
         full_path = save_path / '{0}-{1}-{2}-{3}.jpg'.format(today.hour, today.minute, today.second, today.microsecond)
 
-        dst = cv2.resize(image, dsize=(320, 240), interpolation=cv2.INTER_AREA)
-        cv2.imwrite(full_path, dst)
+        cv2.imwrite(full_path, image)
+        with open(full_path, 'rb') as f:
+            encoded = base64.b64encode(f.read()).decode()
 
-        headers = {'Authorization': 'Token ' + self.token, 'Accept': 'application/json'}
-
+        headers = {'Authorization': 'Bearer ' + self.token}
         data = {
             'title': self.title,
             'text': self.text,
-            'created_date': now,
-            'published_date': now
+            'created_date': now.isoformat(),
+            'published_date': now.isoformat(),
+            'image': encoded,
+            'objects': self.objects,
         }
-        file = {'image': open(full_path, 'rb')}
-        res = requests.post(self.HOST + '/api_root/Post/', data=data, files=file, headers=headers)
-        print(res)
+        res = requests.post(self.HOST + '/ingest', json=data, headers=headers, timeout=120)
+        print(res, res.text)
