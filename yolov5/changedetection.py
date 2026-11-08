@@ -55,7 +55,7 @@ class ChangeDetection:
         dst = cv2.resize(image, dsize=(320, 240), interpolation=cv2.INTER_AREA)
         cv2.imwrite(full_path, dst)
 
-        headers = {'Authorization': 'JWT ' + self.token, 'Accept': 'application/json'}
+        headers = {'Authorization': 'Token ' + self.token, 'Accept': 'application/json'}
 
         data = {
             'title': self.title,
