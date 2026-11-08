@@ -1,9 +1,7 @@
 package com.example.photoviewer;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -13,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -57,7 +56,10 @@ public class MainActivity extends AppCompatActivity {
             pollingHandler.postDelayed(this, 10000);
         }
     };
-    private SharedPreferences preferences;
+    private TokenStore tokenStore;
+    private List<PostItem> allPosts = new ArrayList<>();
+    private boolean unknownOnly;
+    private ImageAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +67,9 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         textView = findViewById(R.id.textView);
-        preferences = getSharedPreferences("photo_viewer", Context.MODE_PRIVATE);
-        authToken = preferences.getString("token", null);
+        tokenStore = new TokenStore(this);
+        authToken = tokenStore.load();
+        if (authToken != null) findViewById(R.id.btn_login).setVisibility(View.GONE);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (view, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
@@ -109,6 +112,29 @@ public class MainActivity extends AppCompatActivity {
         if (taskDownload != null && taskDownload.getStatus() == AsyncTask.Status.RUNNING) taskDownload.cancel(true);
         taskDownload = new CloadImage();
         taskDownload.execute(SITE_URL + "/api_root/Post/");
+    }
+
+    public void onClickFilter(View view) {
+        unknownOnly = !unknownOnly;
+        ((Button) view).setText(unknownOnly ? "전체" : "미등록");
+        renderPosts();
+        ((RecyclerView) findViewById(R.id.recyclerView)).scrollToPosition(0);
+    }
+
+    private void renderPosts() {
+        List<PostItem> visible = new ArrayList<>();
+        for (PostItem post : allPosts) {
+            if (!unknownOnly || post.tags.contains("auth:unknown")) visible.add(post);
+        }
+        textView.setText("게시물 " + visible.size() + "개");
+        if (adapter == null) {
+            adapter = new ImageAdapter(visible, MainActivity.this::showComments);
+            RecyclerView r = findViewById(R.id.recyclerView);
+            r.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+            r.setAdapter(adapter);
+        } else {
+            adapter.update(visible);
+        }
     }
 
     public void onClickUpload(View view) {
@@ -216,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             authToken = token;
-            preferences.edit().putString("token", token).apply();
+            tokenStore.save(token);
             findViewById(R.id.btn_login).setVisibility(View.GONE);
             startClient();
         }
@@ -224,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
 
     private class CloadImage extends AsyncTask<String, Void, List<PostItem>> {
         private String error;
+        private boolean unauthorized;
 
         @Override
         protected List<PostItem> doInBackground(String... urls) {
@@ -232,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
                 HttpURLConnection c = (HttpURLConnection) new URL(urls[0]).openConnection();
                 addAuth(c);
                 if (c.getResponseCode() != 200) {
+                    unauthorized = c.getResponseCode() == 401;
                     error = "서버 응답 " + c.getResponseCode();
                     return result;
                 }
@@ -263,12 +291,17 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<PostItem> posts) {
+            if (unauthorized) {
+                authToken = null;
+                tokenStore.clear();
+                findViewById(R.id.btn_login).setVisibility(View.VISIBLE);
+                showLoginDialog();
+                return;
+            }
             if (posts.isEmpty()) textView.setText(error == null ? "게시물이 없습니다." : "로드 실패: " + error);
             else {
-                textView.setText("게시물 " + posts.size() + "개");
-                RecyclerView r = findViewById(R.id.recyclerView);
-                r.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-                r.setAdapter(new ImageAdapter(posts, MainActivity.this::showComments));
+                allPosts = posts;
+                renderPosts();
             }
         }
     }

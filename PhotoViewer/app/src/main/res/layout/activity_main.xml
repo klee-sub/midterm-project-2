@@ -3,6 +3,7 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
         <Button android:id="@+id/btn_load" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:onClick="onClickDownload" android:text="동기화" />
         <Button android:id="@+id/btn_save" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:onClick="onClickUpload" android:text="새로운 이미지 게시" />
+        <Button android:id="@+id/btn_filter" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.8" android:onClick="onClickFilter" android:text="미등록" />
         <Button android:id="@+id/btn_login" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.7" android:onClick="onClickLogin" android:text="로그인" />
     </LinearLayout>
     <TextView android:id="@+id/textView" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="12dp" android:text="동기화 버튼을 눌러 이미지를 불러오세요." />
