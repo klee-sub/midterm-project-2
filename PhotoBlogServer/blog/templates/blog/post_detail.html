@@ -8,6 +8,13 @@
   <p>{{ post.text|linebreaksbr }}</p>
   <p>{% for tag in post.tags.all %}<span class="label label-info">#{{ tag.name }}</span> {% endfor %}</p>
 </div>
+{% for message in messages %}<p class="alert alert-info">{{ message }}</p>{% endfor %}
+{% if can_enroll %}<form method="post" action="{% url 'post_enroll' pk=post.pk %}" class="form-inline">{% csrf_token %}
+  <input name="name" class="form-control" maxlength="30" placeholder="등록할 이름" required>
+  <label><input type="checkbox" name="consent" required> 본인의 얼굴 등록 동의를 받았습니다.</label>
+  <button class="btn btn-primary" type="submit">이 사람 등록</button>
+</form>{% endif %}
+{% if user.is_staff %}{% for item in post.enrollments.all %}<p>등록 요청 {{ item.name }}: {{ item.get_status_display }} {{ item.message }}</p>{% endfor %}{% endif %}
 <hr><h3>댓글</h3>
 {% for comment in post.comments.all %}<p><b>{{ comment.author.username }}</b>: {{ comment.text }}</p>{% empty %}<p>댓글이 없습니다.</p>{% endfor %}
 {% if user.is_authenticated %}<form method="post">{% csrf_token %}<textarea name="comment" class="form-control" placeholder="댓글을 입력하세요"></textarea><button class="btn btn-primary" type="submit">댓글 등록</button></form>{% endif %}

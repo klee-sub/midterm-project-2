@@ -14,4 +14,6 @@ class PostForm(forms.ModelForm):
     def save_m2m(self):
         names = [name.strip() for name in self.cleaned_data.get('tags', '').split(',') if name.strip()]
         from .models import Tag
-        self.instance.tags.set([Tag.objects.get_or_create(name=name)[0] for name in names])
+        # auth:* tags belong to the auth server: never accept them here, and keep existing ones.
+        tags = [Tag.objects.get_or_create(name=name)[0] for name in names if not name.startswith('auth:')]
+        self.instance.tags.set(tags + list(self.instance.tags.filter(name__startswith='auth:')))

@@ -20,6 +20,17 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
+class EnrollmentRequest(models.Model):
+    STATUS_CHOICES = [('pending', '대기'), ('done', '완료'), ('failed', '실패')]
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='enrollments')
+    name = models.CharField(max_length=30)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    message = models.CharField(max_length=200, blank=True)
+    requested_by = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    created_date = models.DateTimeField(default=timezone.now)
+    def __str__(self):
+        return f'{self.name} ({self.status})'
+
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey('auth.User', on_delete=models.CASCADE)
