@@ -11,12 +11,12 @@ from .errors import BadRequest
 
 log = logging.getLogger(__name__)
 
-# method, path pattern, required bearer token, whether a JSON body is passed, controller
+# method, path pattern, required Authorization header, whether a JSON body is passed, controller
 ROUTES = [
     ("GET", r"/health", None, False, health.show),
-    ("POST", r"/ingest", config.INGEST_TOKEN, True, ingest.create),
-    ("POST", r"/enroll", config.ADMIN_TOKEN, True, enroll.create),
-    ("DELETE", r"/enroll/([^/]+)", config.ADMIN_TOKEN, False, enroll.delete),
+    ("POST", r"/ingest", config.INGEST_AUTHORIZATION, True, ingest.create),
+    ("POST", r"/enroll", config.ADMIN_AUTHORIZATION, True, enroll.create),
+    ("DELETE", r"/enroll/([^/]+)", config.ADMIN_AUTHORIZATION, False, enroll.delete),
 ]
 
 
@@ -35,9 +35,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def authorized(self, token):
+    def authorized(self, expected):
         supplied = self.headers.get("Authorization", "").encode()
-        return hmac.compare_digest(supplied, f"Bearer {token}".encode())
+        return hmac.compare_digest(supplied, expected.encode())
 
     def read_json(self):
         try:

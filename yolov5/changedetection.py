@@ -8,8 +8,9 @@ from datetime import datetime
 
 class ChangeDetection:
     result_prev = []
-    HOST = os.getenv('AUTH_SERVER_URL', 'http://127.0.0.1:9000')
-    token = os.environ['AUTH_SERVER_TOKEN']
+    HOST = os.getenv('AUTH_SERVER_URL', 'https://mwp2.drafts.md')
+    username = os.getenv('AUTH_SERVER_USERNAME', 'klee')
+    password = os.environ['AUTH_SERVER_PASSWORD']
     title = ''
     text = ''
     objects = []
@@ -49,7 +50,6 @@ class ChangeDetection:
         with open(full_path, 'rb') as f:
             encoded = base64.b64encode(f.read()).decode()
 
-        headers = {'Authorization': 'Bearer ' + self.token}
         data = {
             'title': self.title,
             'text': self.text,
@@ -58,5 +58,5 @@ class ChangeDetection:
             'image': encoded,
             'objects': self.objects,
         }
-        res = requests.post(self.HOST + '/ingest', json=data, headers=headers, timeout=120)
+        res = requests.post(self.HOST + '/ingest', json=data, auth=(self.username, self.password), timeout=120)
         print(res, res.text)

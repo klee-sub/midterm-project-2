@@ -1,7 +1,9 @@
+import base64
 import os
 
-INGEST_TOKEN = os.environ["INGEST_TOKEN"]
-ADMIN_TOKEN = os.environ["ADMIN_TOKEN"]
+_ingest_login = f'{os.environ["INGEST_USERNAME"]}:{os.environ["INGEST_PASSWORD"]}'
+INGEST_AUTHORIZATION = "Basic " + base64.b64encode(_ingest_login.encode()).decode()
+ADMIN_AUTHORIZATION = "Bearer " + os.environ["ADMIN_TOKEN"]
 UPSTREAM_URL = os.environ["UPSTREAM_URL"].rstrip("/")
 UPSTREAM_USERNAME = os.environ["UPSTREAM_USERNAME"]
 UPSTREAM_PASSWORD = os.environ["UPSTREAM_PASSWORD"]
